@@ -102,7 +102,7 @@ def get_hotel_deals(
 }
 
     results = GoogleSearch(params).get_dict()
-    st.write(results)
+    # st.write(results)
 
     hotels = results.get("properties", [])
 
@@ -253,7 +253,7 @@ Rules:
         for tool_call in response.tool_calls:
 
             tool_name = tool_call["name"]
-            st.write(tool_name)
+            # st.write(tool_name)
             tool_args = tool_call["args"]
 
             try:
@@ -269,7 +269,7 @@ Rules:
                     result = get_hotel_deals.invoke(
                         tool_args
                     )
-                    st.write(result)
+                    # st.write(result)
 
                 elif tool_name == "get_weather":
                     # st.write("working")
