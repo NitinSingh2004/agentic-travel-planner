@@ -121,6 +121,53 @@ def get_hotel_deals(
     return str(all_hotels)
 
 
+
+@tool
+def get_weather(city: str):
+    """
+    Get current weather for a city.
+
+    Args:
+        city: City name (e.g. London, Delhi, Paris)
+    """
+
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+
+    url = "https://api.openweathermap.org/data/2.5/weather"
+
+    params = {
+        "q": city,
+        "appid": api_key,
+        "units": "metric"
+    }
+
+    try:
+
+        response = requests.get(
+            url,
+            params=params,
+            timeout=10
+        )
+
+        data = response.json()
+
+        if response.status_code != 200:
+            return f"Weather not found for {city}"
+
+        return {
+            "city": city,
+            "temperature": data["main"]["temp"],
+            "feels_like": data["main"]["feels_like"],
+            "humidity": data["main"]["humidity"],
+            "condition": data["weather"][0]["description"],
+            "wind_speed": data["wind"]["speed"]
+        }
+
+    except Exception as e:
+
+        return f"Weather API Error: {str(e)}"
+
+
 # ==========================
 # AGENT FUNCTION
 # ==========================
@@ -135,7 +182,8 @@ def run_travel_agent(chat_history):
 
     tools = [
         search_flights_fn,
-        get_hotel_deals
+        get_hotel_deals,
+        get_weather
     ]
 
     llm_with_tools = llm.bind_tools(tools)
@@ -145,18 +193,30 @@ def run_travel_agent(chat_history):
             content="""
 You are an AI Travel Planner.
 
-Flights:
-- Need departure_id
-- Need arrival_id
-- Need outbound_date
+Available Tools:
+1. Flight Search
+2. Hotel Search
+3. Weather Lookup
 
-Hotels:
-- Need city_query
-- Need check_in
-- Need check_out
+Flight Search Requirements:
+- departure_id
+- arrival_id
+- outbound_date
 
-If information is missing, ask the user.
-Never guess values.
+Hotel Search Requirements:
+- city_query
+- check_in
+- check_out
+
+Weather Requirements:
+- city
+
+Rules:
+- Ask for missing information.
+- Never guess airport codes or dates.
+- Use weather tool when users ask about weather,
+  packing advice, trip planning, or destination conditions.
+- Present tool results in a clean and friendly format.
 """
         )
     ]
@@ -174,54 +234,70 @@ Never guess values.
                 AIMessage(content=msg["content"])
             )
 
-    # First LLM call
-    response = llm_with_tools.invoke(messages)
+    try:
 
-    # No tool needed
-    if not response.tool_calls:
-        return response.content
+        # First LLM call
+        response = llm_with_tools.invoke(messages)
 
-    # IMPORTANT:
-    # Add assistant response containing tool calls
-    messages.append(response)
+        # If no tool call needed
+        if not response.tool_calls:
+            return response.content
 
-    # Execute tools
-    for tool_call in response.tool_calls:
+        # Store assistant message containing tool calls
+        messages.append(response)
 
-        tool_name = tool_call["name"]
-        tool_args = tool_call["args"]
+        # Execute all requested tools
+        for tool_call in response.tool_calls:
 
-        try:
+            tool_name = tool_call["name"]
+            tool_args = tool_call["args"]
 
-            if tool_name == "search_flights_fn":
+            try:
 
-                result = search_flights_fn.invoke(
-                    tool_args
+                if tool_name == "search_flights_fn":
+
+                    result = search_flights_fn.invoke(
+                        tool_args
+                    )
+
+                elif tool_name == "get_hotel_deals":
+
+                    result = get_hotel_deals.invoke(
+                        tool_args
+                    )
+
+                elif tool_name == "get_weather":
+
+                    result = get_weather.invoke(
+                        tool_args
+                    )
+
+                else:
+
+                    result = (
+                        f"Unknown tool requested: "
+                        f"{tool_name}"
+                    )
+
+            except Exception as tool_error:
+
+                result = (
+                    f"Tool execution failed: "
+                    f"{str(tool_error)}"
                 )
 
-            elif tool_name == "get_hotel_deals":
-
-                result = get_hotel_deals.invoke(
-                    tool_args
+            messages.append(
+                ToolMessage(
+                    content=str(result),
+                    tool_call_id=tool_call["id"]
                 )
-
-            else:
-
-                result = f"Unknown tool: {tool_name}"
-
-        except Exception as e:
-
-            result = f"Tool Error: {str(e)}"
-
-        # Add tool output properly
-        messages.append(
-            ToolMessage(
-                content=str(result),
-                tool_call_id=tool_call["id"]
             )
-        )
 
-    # Final LLM call with tool results
-    final_response = llm_with_tools.invoke(messages)
+        # Final response after tool execution
+        final_response = llm_with_tools.invoke(messages)
 
-    return final_response.content
+        return final_response.content
+
+    except Exception as e:
+
+        return f"Agent Error: {str(e)}"
