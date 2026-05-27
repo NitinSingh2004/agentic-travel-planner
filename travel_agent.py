@@ -269,10 +269,11 @@ Rules:
                     )
 
                 elif tool_name == "get_weather":
-
+                    st.write("working")
                     result = get_weather.invoke(
                         tool_args
                     )
+                    st.write(result)
 
                 else:
 
