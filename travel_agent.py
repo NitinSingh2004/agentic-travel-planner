@@ -150,6 +150,7 @@ def get_weather(city: str):
         )
 
         data = response.json()
+        st.write(data)
 
         if response.status_code != 200:
             return f"Weather not found for {city}"
@@ -237,6 +238,7 @@ Rules:
 
         # First LLM call
         response = llm_with_tools.invoke(messages)
+        st.write(response)
 
         # If no tool call needed
         if not response.tool_calls:
