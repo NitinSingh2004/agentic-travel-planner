@@ -232,6 +232,7 @@ Rules:
         # Use a loop to support multi-step tool interactions
         while True:
             response = llm_with_tools.invoke(messages)
+            st.write(response)
             
             # If the LLM doesn't want to call any tools, we are done!
             if not response.tool_calls:
