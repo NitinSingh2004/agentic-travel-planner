@@ -237,6 +237,7 @@ Rules:
 
         # First LLM call
         response = llm_with_tools.invoke(messages)
+        st.write(response)
 
         # If no tool call needed
         if not response.tool_calls:
