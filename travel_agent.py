@@ -238,7 +238,6 @@ Rules:
 
         # First LLM call
         response = llm_with_tools.invoke(messages)
-        st.write(response)
 
         # If no tool call needed
         if not response.tool_calls:
@@ -260,14 +259,12 @@ Rules:
                     result = search_flights_fn.invoke(
                         tool_args
                     )
-                    return result
 
                 elif tool_name == "get_hotel_deals":
 
                     result = get_hotel_deals.invoke(
                         tool_args
                     )
-                    return result
 
                 elif tool_name == "get_weather":
 
@@ -281,7 +278,6 @@ Rules:
                         f"Unknown tool requested: "
                         f"{tool_name}"
                     )
-                    return result
 
             except Exception as tool_error:
 
