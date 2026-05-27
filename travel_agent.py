@@ -268,9 +268,10 @@ Rules:
                     result = get_hotel_deals.invoke(
                         tool_args
                     )
+                    st.write(result)
 
                 elif tool_name == "get_weather":
-                    st.write("working")
+                    # st.write("working")
                     result = get_weather.invoke(
                         tool_args
                     )
