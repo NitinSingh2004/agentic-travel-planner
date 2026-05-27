@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
-import serpapi
-
+from serpapi import GoogleSearch
 from langchain_groq import ChatGroq
 from langchain_core.tools import tool
 from langchain_core.messages import (
@@ -32,14 +31,17 @@ def search_flights_fn(
     Search flights using airport codes and date.
     """
 
-    results = client.search({
-        "engine": "google_flights",
-        "currency": "INR",
-        "departure_id": departure_id,
-        "arrival_id": arrival_id,
-        "outbound_date": outbound_date,
-        "type": "2",
-    })
+    params = {
+    "engine": "google_flights",
+    "currency": "INR",
+    "departure_id": departure_id,
+    "arrival_id": arrival_id,
+    "outbound_date": outbound_date,
+    "type": "2",
+    "api_key": os.getenv("serp_api")
+           }
+
+    results = GoogleSearch(params).get_dict()
 
     flights = results.get("best_flights", [])
 
@@ -90,17 +92,14 @@ def get_hotel_deals(
     """
 
     params = {
-        "engine": "google_hotels",
-        "q": city_query,
-        "check_in_date": check_in,
-        "check_out_date": check_out,
-        "adults": "2",
-        "currency": "INR",
-        "gl": "us",
-        "hl": "en"
-    }
+    "engine": "google_hotels",
+    "q": city_query,
+    "check_in_date": check_in,
+    "check_out_date": check_out,
+    "api_key": os.getenv("serp_api")
+}
 
-    results = client.search(params)
+    results = GoogleSearch(params).get_dict()
 
     hotels = results.get("properties", [])
 
