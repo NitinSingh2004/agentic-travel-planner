@@ -12,9 +12,9 @@ ToolMessage
 
 load_dotenv()
 
-client = serpapi.Client(
-    api_key=os.getenv("serp_api")
-)
+# client = serpapi.Client(
+#     api_key=os.getenv("serp_api")
+# )
 
 
 # ==========================
