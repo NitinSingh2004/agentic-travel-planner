@@ -172,6 +172,7 @@ def get_weather(city: str):
 # AGENT FUNCTION
 # ==========================
 def run_travel_agent(chat_history):
+
     llm = ChatGroq(
         api_key=os.getenv("GROQ_API_KEY"),
         model_name="llama-3.3-70b-versatile",
@@ -186,7 +187,6 @@ def run_travel_agent(chat_history):
 
     llm_with_tools = llm.bind_tools(tools)
 
-    # Initialize messages with System Prompt
     messages = [
         SystemMessage(
             content="""
@@ -213,65 +213,93 @@ Weather Requirements:
 Rules:
 - Ask for missing information.
 - Never guess airport codes or dates.
-- Use weather tool when users ask about weather, packing advice, trip planning, or destination conditions.
+- Use weather tool when users ask about weather,
+  packing advice, trip planning, or destination conditions.
 - Present tool results in a clean and friendly format.
 """
         )
     ]
 
-    # Reconstruct history using correct Langchain Message types
+    # Add chat history
     for msg in chat_history:
+
         if msg["role"] == "user":
-            messages.append(HumanMessage(content=msg["content"]))
+            messages.append(
+                HumanMessage(content=msg["content"])
+            )
+
         elif msg["role"] == "assistant":
-            # Note: If history includes tool calls, a basic AIMessage string might lose context.
-            # Assuming basic conversational text history here.
-            messages.append(AIMessage(content=msg["content"]))
+            messages.append(
+                AIMessage(content=msg["content"])
+            )
 
     try:
-        # Use a loop to support multi-step tool interactions
-        while True:
-            response = llm_with_tools.invoke(messages)
-            st.write(response)
-            
-            # If the LLM doesn't want to call any tools, we are done!
-            if not response.tool_calls:
-                return response.content
 
-            # Store the LLM's thought process/tool call intent
-            messages.append(response)
+        # First LLM call
+        response = llm_with_tools.invoke(messages)
 
-            # Process all tool calls requested in this turn
-            for tool_call in response.tool_calls:
-                tool_name = tool_call["name"]
-                tool_args = tool_call["args"]
-                tool_id = tool_call["id"]
+        # If no tool call needed
+        if not response.tool_calls:
+            return response.content
 
-                try:
-                    # FIX: Unpack arguments using **tool_args
-                    if tool_name == "search_flights_fn":
-                        result = search_flights_fn.invoke(**tool_args)
+        # Store assistant message containing tool calls
+        messages.append(response)
 
-                    elif tool_name == "get_hotel_deals":
-                        result = get_hotel_deals.invoke(**tool_args)
+        # Execute all requested tools
+        for tool_call in response.tool_calls:
 
-                    elif tool_name == "get_weather":
-                        result = get_weather.invoke(**tool_args)
+            tool_name = tool_call["name"]
+            tool_args = tool_call["args"]
 
-                    else:
-                        result = f"Unknown tool requested: {tool_name}"
+            try:
 
-                except Exception as tool_error:
-                    result = f"Tool execution failed: {str(tool_error)}"
+                if tool_name == "search_flights_fn":
 
-                # Append result back to conversation context
-                messages.append(
-                    ToolMessage(
-                        content=str(result),
-                        tool_call_id=tool_id
+                    result = search_flights_fn.invoke(
+                        tool_args
                     )
+                    return result
+
+                elif tool_name == "get_hotel_deals":
+
+                    result = get_hotel_deals.invoke(
+                        tool_args
+                    )
+                    return result
+
+                elif tool_name == "get_weather":
+
+                    result = get_weather.invoke(
+                        tool_args
+                    )
+
+                else:
+
+                    result = (
+                        f"Unknown tool requested: "
+                        f"{tool_name}"
+                    )
+                    return result
+
+            except Exception as tool_error:
+
+                result = (
+                    f"Tool execution failed: "
+                    f"{str(tool_error)}"
                 )
-                
+
+            messages.append(
+                ToolMessage(
+                    content=str(result),
+                    tool_call_id=tool_call["id"]
+                )
+            )
+
+        # Final response after tool execution
+        final_response = llm_with_tools.invoke(messages)
+
+        return final_response.content
 
     except Exception as e:
+
         return f"Agent Error: {str(e)}"
