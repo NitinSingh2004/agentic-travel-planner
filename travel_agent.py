@@ -251,6 +251,7 @@ Rules:
         for tool_call in response.tool_calls:
 
             tool_name = tool_call["name"]
+            st.write(tool_name)
             tool_args = tool_call["args"]
 
             try:
