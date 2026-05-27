@@ -296,6 +296,7 @@ Rules:
 
         # Final response after tool execution
         final_response = llm_with_tools.invoke(messages)
+        st.write(final_response)
 
         return final_response.content
 
