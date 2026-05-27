@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import requests
 from serpapi import GoogleSearch
 from langchain_groq import ChatGroq
 import streamlit as st
