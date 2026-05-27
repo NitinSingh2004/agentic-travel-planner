@@ -154,49 +154,73 @@ Hotels:
 - Need check_in
 - Need check_out
 
-If information is missing,
-ask the user.
-
-Never guess.
+If information is missing, ask the user.
+Never guess values.
 """
         )
     ]
 
+    # Add chat history
     for msg in chat_history:
 
         if msg["role"] == "user":
             messages.append(
                 HumanMessage(content=msg["content"])
             )
-        else:
+
+        elif msg["role"] == "assistant":
             messages.append(
                 AIMessage(content=msg["content"])
             )
 
+    # First LLM call
     response = llm_with_tools.invoke(messages)
 
-    if response.tool_calls:
+    # No tool needed
+    if not response.tool_calls:
+        return response.content
 
-        for tool_call in response.tool_calls:
+    # IMPORTANT:
+    # Add assistant response containing tool calls
+    messages.append(response)
 
-            if tool_call["name"] == "search_flights_fn":
+    # Execute tools
+    for tool_call in response.tool_calls:
+
+        tool_name = tool_call["name"]
+        tool_args = tool_call["args"]
+
+        try:
+
+            if tool_name == "search_flights_fn":
 
                 result = search_flights_fn.invoke(
-                    tool_call["args"]
+                    tool_args
                 )
 
-            elif tool_call["name"] == "get_hotel_deals":
+            elif tool_name == "get_hotel_deals":
 
                 result = get_hotel_deals.invoke(
-                    tool_call["args"]
+                    tool_args
                 )
 
-            messages.append(
-                AIMessage(content=str(result))
+            else:
+
+                result = f"Unknown tool: {tool_name}"
+
+        except Exception as e:
+
+            result = f"Tool Error: {str(e)}"
+
+        # Add tool output properly
+        messages.append(
+            ToolMessage(
+                content=str(result),
+                tool_call_id=tool_call["id"]
             )
+        )
 
-        final_response = llm_with_tools.invoke(messages)
+    # Final LLM call with tool results
+    final_response = llm_with_tools.invoke(messages)
 
-        return final_response.content
-
-    return response.content
+    return final_response.content
