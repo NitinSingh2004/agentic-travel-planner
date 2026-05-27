@@ -151,7 +151,7 @@ def get_weather(city: str):
         )
 
         data = response.json()
-        st.write(data)
+        # st.write(data)
 
         if response.status_code != 200:
             return f"Weather not found for {city}"
@@ -239,7 +239,7 @@ Rules:
 
         # First LLM call
         response = llm_with_tools.invoke(messages)
-        st.write(response.tool_calls)
+        # st.write(response.tool_calls)
 
         # If no tool call needed
         if not response.tool_calls:
@@ -274,7 +274,7 @@ Rules:
                     result = get_weather.invoke(
                         tool_args
                     )
-                    st.write(result)
+                    # st.write(result)
 
                 else:
 
