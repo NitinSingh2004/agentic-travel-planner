@@ -102,6 +102,7 @@ def get_hotel_deals(
 }
 
     results = GoogleSearch(params).get_dict()
+    st.write(results)
 
     hotels = results.get("properties", [])
 
