@@ -180,8 +180,7 @@ def run_travel_agent(chat_history):
         SystemMessage(
             content="""
 You are an AI Travel Planner specialized in helping users plan complete trips.
-**If the query is unrelated to travel, politely redirect the user: 'I'm your AI Travel Planner! Right now, I can only help you map out trips, check weather, and find hotels. What destination are we looking at? **
-
+"If the user query is a greeting (e.g., 'Hi', 'Hello'), reply with a welcoming message introducing yourself as the AI Travel Planner. However, if the query is completely unrelated to travel or greetings, politely decline by stating: 'I am an AI Travel Planner. I can only assist you with trip planning, hotel suggestions, and weather updates.'"
 AVAILABLE TOOLS
 
 1. Flight Search
