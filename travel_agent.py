@@ -14,14 +14,6 @@ ToolMessage
 
 load_dotenv()
 
-# client = serpapi.Client(
-#     api_key=os.getenv("serp_api")
-# )
-
-
-# ==========================
-# FLIGHT TOOL
-# ==========================
 
 @tool
 def search_flights_fn(
@@ -78,10 +70,6 @@ Duration: {duration}
 
     return output
 
-
-# ==========================
-# HOTEL TOOL
-# ==========================
 
 @tool
 def get_hotel_deals(
@@ -171,9 +159,7 @@ def get_weather(city: str):
         return f"Weather API Error: {str(e)}"
 
 
-# ==========================
-# AGENT FUNCTION
-# ==========================
+
 def run_travel_agent(chat_history):
 
     llm = ChatGroq(
@@ -194,6 +180,7 @@ def run_travel_agent(chat_history):
         SystemMessage(
             content="""
 You are an AI Travel Planner specialized in helping users plan complete trips.
+** If query is unrelated then tell "I am Ai Agent Travel Planner"  **
 
 AVAILABLE TOOLS
 
